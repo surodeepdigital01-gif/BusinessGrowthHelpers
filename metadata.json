@@ -1,0 +1,8 @@
+{
+  "name": "BusinessGrowthHelpers - Predictable Patient Growth",
+  "description": "AI-powered clinic operations system that captures every inquiry, replies instantly on WhatsApp, and increases bookings automatically.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
