@@ -21,7 +21,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, CheckCircle2, FileSearch, Sparkles, BarChart3, Rocket, HeartPulse, Mail, MapPin, Scale, ShieldAlert, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization for Gemini AI
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is not set. AI features will be disabled.");
+    return null;
+  }
+  if (!aiInstance) {
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -138,11 +151,16 @@ const App: React.FC = () => {
       });
 
       // Also generate AI insight for the user experience
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Generate a short, professional 2-sentence growth insight for a dental clinic based on their form submission. Focus on potential for patient conversion and automation.`,
-      });
-      setInsight(response.text || "Your clinic has massive potential for automated patient booking through high-ticket local SEO optimization.");
+      const ai = getAI();
+      if (ai) {
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: `Generate a short, professional 2-sentence growth insight for a dental clinic based on their form submission. Focus on potential for patient conversion and automation.`,
+        });
+        setInsight(response.text || "Your clinic has massive potential for automated patient booking through high-ticket local SEO optimization.");
+      } else {
+        setInsight("Your clinic has massive potential for automated patient booking through high-ticket local SEO optimization. (Note: AI insights are currently in demo mode)");
+      }
       setStatus('success');
     } catch (err) {
       console.error(err);

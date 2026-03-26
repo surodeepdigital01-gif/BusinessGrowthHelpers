@@ -4,7 +4,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, X, Send, Loader2, Bot, User, Sparkles } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization for Gemini AI
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+  if (!apiKey) {
+    console.warn("GEMINI_API_KEY is not set. Chatbot AI will be disabled.");
+    return null;
+  }
+  if (!aiInstance) {
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 interface Message {
   role: 'user' | 'model';
@@ -37,6 +50,13 @@ const Chatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
+      const ai = getAI();
+      if (!ai) {
+        setMessages(prev => [...prev, { role: 'model', text: "I'm currently in offline mode. Please book a Growth Audit to speak with our team!" }]);
+        setIsLoading(false);
+        return;
+      }
+
       const chat = ai.chats.create({
         model: "gemini-3-flash-preview",
         config: {
